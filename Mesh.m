@@ -2,20 +2,23 @@
 clear
 close all
 
-obj = readObj('man.obj'); %load mesh info.
+obj = readObj('dino.obj'); %load mesh info.
 FV = obj.f.v;
 V = obj.v;
+ 
+%----code for dino.obj-----------------------------------------------------
+    a = V(:,1);
+    V(:,1) = -V(:,3);
+    V(:,2) = -a;
+%--------------------------------------------------------------------------   
 
 figure
 subplot(1,2,1)
 trimesh(FV(:,1:3), V(:,1), V(:,2)); 
-axis([-1.5 1.5 -2 2])
+%axis([-1.5 1.5 -2 2])
 w=1000;
 
 [x,y] = ginput(4); %select points.
-hold on
-plot(x,y,'o');
-
 v = zeros(3,1); %Find closest vertex.
 for i =1:3
     min_dist= 10000;
@@ -30,6 +33,8 @@ for i =1:3
     y(i) = V(t,2);
     v(i)=t;
 end
+hold on
+plot(x,y,'o');
 
 %--------------------------------------------------------------------------
 %Algorithm 1:
@@ -73,8 +78,8 @@ for i=1:length(FV)
 end
 
 for i=1:3
-    A1(1992+2*(i-1)+1, 2*(v(i)-1)+1) = w;
-    A1(1992+2*(i-1)+2, 2*v(i)) = w;
+    A1(6*length(FV)+2*(i-1)+1, 2*(v(i)-1)+1) = w;
+    A1(6*length(FV)+2*(i-1)+2, 2*v(i)) = w;
 end
 
 V_new = (A1'*A1)\A1'*b1; %find least squares solution.
@@ -91,7 +96,7 @@ subplot(1,2,2)
 trimesh(FV(:,1:3), V1(:,1), V1(:,2)); 
 hold on
 plot(x,y,'o');
-axis([-1.5 1.5 -2 2])
+% axis([-1.5 1.5 -2 2])
 
 %--------------------------------------------------------------------------
 %Algorithm 2:
@@ -152,7 +157,7 @@ figure
 trimesh(FV(:,1:3), V2(:,1), V2(:,2)); 
 hold on
 plot(x,y,'o');
-axis([-1.5 1.5 -1 2])
+% axis([-1.5 1.5 -1 2])
 
 %Not containing 0,1:
 %G1 = [V(v1i,1), V(v1i,2); V(v1i,2), -V(v1i,1); V(v1j,1), V(v1j,2); V(v1j,2), -V(v1j,1); V(v1l,1), V(v1l,2); V(v1l,2), -V(v1l,1); V(v1r,1), V(v1r,2); V(v1r,2), -V(v1r,1)];
