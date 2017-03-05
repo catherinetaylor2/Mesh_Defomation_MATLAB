@@ -31,6 +31,9 @@ for i =1:3
     v(i)=t;
 end
 
+%--------------------------------------------------------------------------
+%Algorithm 1:
+
 b1 = zeros(6*length(FV) + 6,1);
 b1(6*length(FV)+1:6*length(FV)+6) = w*[x(4),y(4), x(2),y(2),x(3),y(3)];
 A1 = zeros(6*length(FV)+6, 2*length(V));
@@ -75,21 +78,81 @@ for i=1:3
 end
 
 V_new = (A1'*A1)\A1'*b1; %find least squares solution.
-V=zeros(length(V),2);
+V1=zeros(length(V),2);
 for i =1:length(V_new)
     if (mod(i,2)==0)
-        V(i/2, 2) = V_new(i);
+        V1(i/2, 2) = V_new(i);
     else
-        V((i-1)/2+1,1) = V_new(i);
+        V1((i-1)/2+1,1) = V_new(i);
     end    
 end
 
 subplot(1,2,2)
-trimesh(FV(:,1:3), V(:,1), V(:,2)); 
+trimesh(FV(:,1:3), V1(:,1), V1(:,2)); 
 hold on
 plot(x,y,'o');
 axis([-1.5 1.5 -2 2])
 
+%--------------------------------------------------------------------------
+%Algorithm 2:
+
+A2 = zeros(3*length(FV)+3, length(V));
+for i=1:length(FV)
+    A2(3*(i-1)+1, FV(i,1)) = -1; 
+    A2(3*(i-1)+1, FV(i,2)) = 1; 
+    A2(3*(i-1)+2, FV(i,2)) = -1; 
+    A2(3*(i-1)+2, FV(i,3)) = 1; 
+    A2(3*(i-1)+3, FV(i,3)) = -1; 
+    A2(3*(i-1)+3, FV(i,1)) = 1; 
+end
+for i=1:3
+A2(3*length(FV)+i, v(i)) = w;
+end
+
+b2x = zeros(3*length(FV) + 3,1);
+b2y = zeros(3*length(FV) + 3,1);
+for i=1:length(FV)
+    for k=1:3
+        vi=FV(i,k); %Build up edge neighbours.
+        vj = FV(i,mod(k,3)+1);
+        vl = FV(i,(k==1)*3 + (k-1));
+        vr=0;
+        e = [V(vj,1) - V(vi,1); V(vj,2) - V(vi,2)]; 
+         for j=1:length(FV) %Find right edge neighbour.
+            if (((vi == FV(j,1))||(vi == FV(j,2))||(vi == FV(j,3)))&& ((vj == FV(j,1))||(vj == FV(j,2))||(vj == FV(j,3)))&&((vl ~= FV(j,1))&&(vl ~= FV(j,2))&&(vl ~= FV(j,3))))
+                vr =(vi ~= FV(j,1))*(vj ~= FV(j,1))*FV(j,1)+(vi ~= FV(j,2))*(vj ~= FV(j,2))*FV(j,2)+(vi ~= FV(j,3))*(vj ~= FV(j,3))*FV(j,3);
+            end
+         end
+        if (vr~=0)
+            G = [V(vi,1), V(vi,2), 1,0 ; V(vi,2), -V(vi,1), 0,1; V(vj,1), V(vj,2), 1,0 ; V(vj,2), -V(vj,1), 0, 1; V(vl,1), V(vl,2), 1,0 ; V(vl,2), -V(vl,1), 0,1 ; V(vr,1), V(vr,2), 1,0 ; V(vr,2), -V(vr,1),0,1];
+            G = (G'*G)\G';
+            t = G(1:2,:)*[V1(vi,1), V1(vi,2), V1(vj,1), V1(vj,2), V1(vl,1), V1(vl,2), V1(vr,1),V1(vr,2)]';
+        else
+            G = [V(vi,1), V(vi,2), 1,0 ; V(vi,2), -V(vi,1), 0, 1; V(vj,1), V(vj,2), 1,0 ; V(vj,2), -V(vj,1), 0, 1; V(vl,1), V(vl,2), 1,0 ; V(vl,2), -V(vl,1), 0,1 ];
+            G = (G'*G)\G';
+            t = G(1:2,:)*[V1(vi,1), V1(vi,2), V1(vj,1), V1(vj,2), V1(vl,1), V1(vl,2)]';
+        end  
+        T = 1/(sqrt(t(1)^2+t(2)^2))*[t(1), t(2); -t(2), t(1)];
+        b = T*e;
+        b2x(3*(i-1)+k) = b(1);
+        b2y(3*(i-1)+k) = b(2);
+    end
+end
+b2x(3*length(FV)+1) = w*x(4); 
+b2y(3*length(FV)+1) = w*y(4);
+for i=2:3
+   b2x(3*length(FV)+i) = w*x(i); 
+   b2y(3*length(FV)+i) = w*y(i);
+end
+
+V2(:,1) = (A2'*A2)\A2'*b2x;
+V2(:,2) = (A2'*A2)\A2'*b2y;
+
+figure
+trimesh(FV(:,1:3), V2(:,1), V2(:,2)); 
+hold on
+plot(x,y,'o');
+axis([-1.5 1.5 -1 2])
 
 %Not containing 0,1:
 %G1 = [V(v1i,1), V(v1i,2); V(v1i,2), -V(v1i,1); V(v1j,1), V(v1j,2); V(v1j,2), -V(v1j,1); V(v1l,1), V(v1l,2); V(v1l,2), -V(v1l,1); V(v1r,1), V(v1r,2); V(v1r,2), -V(v1r,1)];
