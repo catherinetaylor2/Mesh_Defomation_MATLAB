@@ -2,52 +2,52 @@
 clear
 close all
 
-obj = readObj('cube.obj'); %load mesh info.
+obj = readObj('sphere_small.obj'); %load mesh info.
 FV = obj.f.v;
 V = obj.v;
-V= V(1:8,:);
-FV = FV(1:12,:);
+% V= V(1:8,:);
+% FV = FV(1:12,:);
 h=figure;
 trimesh(FV(:,1:3), V(:,1), V(:,2), V(:,3)); 
 axis([-1.5 1.5 -1.5 1.5 -1.5 1.5])
  w=1;
 % % [x,y,z] = ginput(4);
 % 
-% pts = zeros(4,3);
-% datacursormode on
-% dcm_obj = datacursormode(h);
-% 
-% for i=1:4
-%     waitforbuttonpress;
-%     f = getCursorInfo(dcm_obj);
-%     pts(i,:) = f.Position;
-% end
-% 
-% x = pts(:,1);
-% y=pts(:,2);
-% z=pts(:,3);
-%v = zeros(3,1);
+pts = zeros(4,3);
+datacursormode on
+dcm_obj = datacursormode(h);
 
-v = [1, 4,8];
-x = [V(v(1),1), V(v(2),1),V(v(2),1), -1];
-y = [V(v(1),2), V(v(2),2),V(v(2),2), -1];
-z = [V(v(1),3), V(v(2),3),V(v(2),3), 1];
+for i=1:4
+    waitforbuttonpress;
+    f = getCursorInfo(dcm_obj);
+    pts(i,:) = f.Position;
+end
 
-% for i =1:3
-%     min_dist= 10000; 
-%     t=0;
-%     for j =1:length(V) 
-%         d = sqrt((x(i)-V(j,1))^2 + (y(i) - V(j,2))^2)+(z(i) - V(j,2)^2);
-%         if (d < min_dist)
-%             min_dist = d;
-%             t = j;
-%         end
-%     end    
-%     x(i) = V(t,1);
-%     y(i) = V(t,2);
-%     z(i) = V(t,3);
-%     v(i)=t;
-% end
+x = pts(:,1);
+y=pts(:,2);
+z=pts(:,3);
+v = zeros(3,1);
+% 
+% v = [300, 40,125];
+% x = [V(v(1),1), V(v(2),1),V(v(2),1), -1];
+% y = [V(v(1),2), V(v(2),2),V(v(2),2), -1];
+% z = [V(v(1),3), V(v(2),3),V(v(2),3), 1];
+
+for i =1:3
+    min_dist= 10000; 
+    t=0;
+    for j =1:length(V) 
+        d = sqrt((x(i)-V(j,1))^2 + (y(i) - V(j,2))^2)+(z(i) - V(j,2)^2);
+        if (d < min_dist)
+            min_dist = d;
+            t = j;
+        end
+    end    
+    x(i) = V(t,1);
+    y(i) = V(t,2);
+    z(i) = V(t,3);
+    v(i)=t;
+end
 
 hold on
 plot3(x(2:3),y(2:3),z(2:3),'o');
@@ -138,9 +138,10 @@ hold on
 plot3(x(2:3),y(2:3),z(2:3),'o');
 plot3(x(1),y(1),z(1),'ro');
 plot3(x(4),y(4),z(4),'go');
-axis([-1.5 1.5 -1.5 1.5 -1.5 1.5])
+% axis([-1.5 1.5 -1.5 1.5 -1.5 1.5])
 
 T = zeros(3*length(V)+9, 3*length(V));
+delta2 = L*Vn;
 for i =1:length(V)
    
     Ai = zeros(3*length(Vertex_neighbours{i}), 7);
@@ -149,32 +150,33 @@ for i =1:length(V)
         Ai(3*(j-1)+1, :) = [V(Vertex_neighbours{i}(j),1), 0, V(Vertex_neighbours{i}(j),3), -V(Vertex_neighbours{i}(j),2),1,0,0];
         Ai(3*(j-1)+2, :) = [V(Vertex_neighbours{i}(j),2), -V(Vertex_neighbours{i}(j),3), 0 ,V(Vertex_neighbours{i}(j),1),0,1,0];
         Ai(3*(j-1)+3, :) = [V(Vertex_neighbours{i}(j),3), V(Vertex_neighbours{i}(j),2), -V(Vertex_neighbours{i}(j),1),0,0,0,1];
-        bi(3*(j-1)+1) =     Vn(Vertex_neighbours{i}(j),1); 
-        bi(3*(j-1)+2) =     Vn(Vertex_neighbours{i}(j),2);
-        bi(3*(j-1)+3) =     Vn(Vertex_neighbours{i}(j),3);
+        bi(3*(j-1)+1) =     delta2(Vertex_neighbours{i}(j),1); 
+        bi(3*(j-1)+2) =    delta2(Vertex_neighbours{i}(j),2);
+        bi(3*(j-1)+3) =     delta2(Vertex_neighbours{i}(j),3);
     end
-    Ti = (Ai'*Ai)\Ai';
-    Di  = [delta(i,1), 0, delta(i,3), -delta(i,2), 1,0,0; delta(i,2), -delta(i,3), 0 , delta(i,1), 0,1,0; delta(i,3), delta(i,2), - delta(i,1),0,0,0,1];
-    TiDi = Di*Ti;
-    for j=1:d(i)
-        T(3*(i-1)+1, 3*(Vertex_neighbours{i}(j)-1)+1) = TiDi(1,3*(j-1)+1); 
-        T(3*(i-1)+1, 3*(Vertex_neighbours{i}(j)-1)+2) = TiDi(1,3*(j-1)+2);
-        T(3*(i-1)+1, 3*(Vertex_neighbours{i}(j)-1)+3) = TiDi(1,3*(j-1)+3);
-        T(3*(i-1)+2, 3*(Vertex_neighbours{i}(j)-1)+1) = TiDi(2,3*(j-1)+1); 
-        T(3*(i-1)+2, 3*(Vertex_neighbours{i}(j)-1)+2) = TiDi(2,3*(j-1)+2);
-        T(3*(i-1)+2, 3*(Vertex_neighbours{i}(j)-1)+3) = TiDi(2,3*(j-1)+3);
-        T(3*(i-1)+3, 3*(Vertex_neighbours{i}(j)-1)+1) = TiDi(3,3*(j-1)+1); 
-        T(3*(i-1)+3, 3*(Vertex_neighbours{i}(j)-1)+2) = TiDi(3,3*(j-1)+2);
-        T(3*(i-1)+3, 3*(Vertex_neighbours{i}(j)-1)+3) = TiDi(3,3*(j-1)+3);
-    end
-    b1(3*(i-1)+1) =0;
-    b1(3*(i-1)+2) = 0;
-    b1(3*(i-1)+3) = 0;
+    Ti = (Ai'*Ai)\Ai'*bi;
+%     Di  = [delta(i,1), 0, delta(i,3), -delta(i,2), 1,0,0; delta(i,2), -delta(i,3), 0 , delta(i,1), 0,1,0; delta(i,3), delta(i,2), - delta(i,1),0,0,0,1];
+    T = [Ti(1), -Ti(4), Ti(3), Ti(5); Ti(4), Ti(1), -Ti(2), Ti(6); -Ti(3), Ti(2), Ti(1), Ti(7); 0,0,0,1];
+%     for j=1:d(i)
+%         T(3*(i-1)+1, 3*(Vertex_neighbours{i}(j)-1)+1) = TiDi(1,3*(j-1)+1); 
+%         T(3*(i-1)+1, 3*(Vertex_neighbours{i}(j)-1)+2) = TiDi(1,3*(j-1)+2);
+%         T(3*(i-1)+1, 3*(Vertex_neighbours{i}(j)-1)+3) = TiDi(1,3*(j-1)+3);
+%         T(3*(i-1)+2, 3*(Vertex_neighbours{i}(j)-1)+1) = TiDi(2,3*(j-1)+1); 
+%         T(3*(i-1)+2, 3*(Vertex_neighbours{i}(j)-1)+2) = TiDi(2,3*(j-1)+2);
+%         T(3*(i-1)+2, 3*(Vertex_neighbours{i}(j)-1)+3) = TiDi(2,3*(j-1)+3);
+%         T(3*(i-1)+3, 3*(Vertex_neighbours{i}(j)-1)+1) = TiDi(3,3*(j-1)+1); 
+%         T(3*(i-1)+3, 3*(Vertex_neighbours{i}(j)-1)+2) = TiDi(3,3*(j-1)+2);
+%         T(3*(i-1)+3, 3*(Vertex_neighbours{i}(j)-1)+3) = TiDi(3,3*(j-1)+3);
+%     end
+TT = T*[delta(i,1), delta(i,2), delta(i,3),1]';
+    b1(3*(i-1)+1) =TT(1);
+    b1(3*(i-1)+2) = TT(2);
+    b1(3*(i-1)+3) = TT(3);
     
     
 end
 
-   V2 = ((A1-T)'*(A1-T))\(A1-T)'*b1;
+   V2 = ((A1)'*(A1))\(A1)'*b1;
    
   V2n=zeros(length(V),3);
 for i =1:length(V2)
@@ -193,4 +195,4 @@ hold on
 plot3(x(2:3),y(2:3),z(2:3),'o');
 plot3(x(1),y(1),z(1),'ro');
 plot3(x(4),y(4),z(4),'go');
-axis([-1.5 1.5 -1.5 1.5 -1.5 1.5])
+% axis([-1.5 1.5 -1.5 1.5 -1.5 1.5])
