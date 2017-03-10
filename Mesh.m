@@ -42,8 +42,15 @@ plot(x,y,'o');
 b1 = zeros(6*length(FV) + 6,1);
 b1(6*length(FV)+1:6*length(FV)+6) = w*[x(4),y(4), x(2),y(2),x(3),y(3)];
 A1 = zeros(6*length(FV)+6, 2*length(V));
+A2 = zeros(3*length(FV)+3, length(V));
 Edges = [-1,0,1,0,0,0,0,0;0,-1,0,1,0,0,0,0];
 for i=1:length(FV)
+     A2(3*(i-1)+1, FV(i,1)) = -1; 
+    A2(3*(i-1)+1, FV(i,2)) = 1; 
+    A2(3*(i-1)+2, FV(i,2)) = -1; 
+    A2(3*(i-1)+2, FV(i,3)) = 1; 
+    A2(3*(i-1)+3, FV(i,3)) = -1; 
+    A2(3*(i-1)+3, FV(i,1)) = 1; 
     for k =1:3
         vi=FV(i,k); %Build up edge neighbours.
         vj = FV(i,mod(k,3)+1);
@@ -80,6 +87,7 @@ end
 for i=1:3
     A1(6*length(FV)+2*(i-1)+1, 2*(v(i)-1)+1) = w;
     A1(6*length(FV)+2*(i-1)+2, 2*v(i)) = w;
+    A2(3*length(FV)+i, v(i)) = w;
 end
 
 V_new = (A1'*A1)\A1'*b1; %find least squares solution.
@@ -100,19 +108,6 @@ plot(x,y,'o');
 
 %--------------------------------------------------------------------------
 %Algorithm 2:
-
-A2 = zeros(3*length(FV)+3, length(V));
-for i=1:length(FV)
-    A2(3*(i-1)+1, FV(i,1)) = -1; 
-    A2(3*(i-1)+1, FV(i,2)) = 1; 
-    A2(3*(i-1)+2, FV(i,2)) = -1; 
-    A2(3*(i-1)+2, FV(i,3)) = 1; 
-    A2(3*(i-1)+3, FV(i,3)) = -1; 
-    A2(3*(i-1)+3, FV(i,1)) = 1; 
-end
-for i=1:3
-A2(3*length(FV)+i, v(i)) = w;
-end
 
 b2x = zeros(3*length(FV) + 3,1);
 b2y = zeros(3*length(FV) + 3,1);
