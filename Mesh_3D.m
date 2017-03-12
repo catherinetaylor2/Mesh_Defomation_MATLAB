@@ -2,7 +2,7 @@
 clear
 close all
 
-obj = readObj('sphere_small.obj'); %load mesh info.
+obj = readObj('sphere.obj'); %load mesh info.
 FV = obj.f.v;
 V = obj.v;
 % V= V(1:8,:);
@@ -11,21 +11,21 @@ h=figure;
 trimesh(FV(:,1:3), V(:,1), V(:,2), V(:,3)); 
 axis([-1.5 1.5 -1.5 1.5 -1.5 1.5])
  w=1;
-% % [x,y,z] = ginput(4);
+[x,y,z] = ginput(4);
 % 
-pts = zeros(4,3);
-datacursormode on
-dcm_obj = datacursormode(h);
-
-for i=1:4
-    waitforbuttonpress;
-    f = getCursorInfo(dcm_obj);
-    pts(i,:) = f.Position;
-end
-
-x = pts(:,1);
-y=pts(:,2);
-z=pts(:,3);
+% pts = zeros(4,3);
+% datacursormode on
+% dcm_obj = datacursormode(h);
+% 
+% for i=1:4
+%     waitforbuttonpress;
+%     f = getCursorInfo(dcm_obj);
+%     pts(i,:) = f.Position;
+% end
+% 
+% x = pts(:,1);
+% y=pts(:,2);
+% z=pts(:,3);
 v = zeros(3,1);
 % 
 % v = [300, 40,125];
@@ -37,7 +37,7 @@ for i =1:3
     min_dist= 10000; 
     t=0;
     for j =1:length(V) 
-        d = sqrt((x(i)-V(j,1))^2 + (y(i) - V(j,2))^2)+(z(i) - V(j,2)^2);
+        d = sqrt((x(i)-V(j,1))^2 + (y(i) - V(j,2))^2);
         if (d < min_dist)
             min_dist = d;
             t = j;
@@ -150,13 +150,26 @@ for i =1:length(V)
         Ai(3*(j-1)+1, :) = [V(Vertex_neighbours{i}(j),1), 0, V(Vertex_neighbours{i}(j),3), -V(Vertex_neighbours{i}(j),2),1,0,0];
         Ai(3*(j-1)+2, :) = [V(Vertex_neighbours{i}(j),2), -V(Vertex_neighbours{i}(j),3), 0 ,V(Vertex_neighbours{i}(j),1),0,1,0];
         Ai(3*(j-1)+3, :) = [V(Vertex_neighbours{i}(j),3), V(Vertex_neighbours{i}(j),2), -V(Vertex_neighbours{i}(j),1),0,0,0,1];
-        bi(3*(j-1)+1) =     delta2(Vertex_neighbours{i}(j),1); 
-        bi(3*(j-1)+2) =    delta2(Vertex_neighbours{i}(j),2);
-        bi(3*(j-1)+3) =     delta2(Vertex_neighbours{i}(j),3);
+        bi(3*(j-1)+1) =     Vn(Vertex_neighbours{i}(j),1); 
+        bi(3*(j-1)+2) =    Vn(Vertex_neighbours{i}(j),2);
+        bi(3*(j-1)+3) =    Vn(Vertex_neighbours{i}(j),3);
     end
     Ti = (Ai'*Ai)\Ai'*bi;
-%     Di  = [delta(i,1), 0, delta(i,3), -delta(i,2), 1,0,0; delta(i,2), -delta(i,3), 0 , delta(i,1), 0,1,0; delta(i,3), delta(i,2), - delta(i,1),0,0,0,1];
-    T = [Ti(1), -Ti(4), Ti(3), Ti(5); Ti(4), Ti(1), -Ti(2), Ti(6); -Ti(3), Ti(2), Ti(1), Ti(7); 0,0,0,1];
+
+    Di  = [delta(i,1), 0, delta(i,3), -delta(i,2), 1,0,0; delta(i,2), -delta(i,3), 0 , delta(i,1), 0,1,0; delta(i,3), delta(i,2), - delta(i,1),0,0,0,1];
+   T = [Ti(1), -Ti(4), Ti(3), Ti(5); Ti(4), Ti(1), -Ti(2), Ti(6); -Ti(3), Ti(2), Ti(1), Ti(7); 0,0,0,1];
+TiDi = Di*Ti;
+% Li =  zeros(3, 3*d(i));
+% Li(1,1) =1;
+% Li(2,2) =1;
+% Li(3,3)=1;
+% 
+%     for k=2:d(i)
+%    Li(1,3*(k-1)+1) =  -1/d(i);
+%    Li(2, 3*(k-1)+2) = -1/d(i);
+%    Li(3, 3*(k-1)+3) = -1/d(i);
+%     end
+% TiDi = Li - TiDi;
 %     for j=1:d(i)
 %         T(3*(i-1)+1, 3*(Vertex_neighbours{i}(j)-1)+1) = TiDi(1,3*(j-1)+1); 
 %         T(3*(i-1)+1, 3*(Vertex_neighbours{i}(j)-1)+2) = TiDi(1,3*(j-1)+2);
@@ -170,13 +183,20 @@ for i =1:length(V)
 %     end
 TT = T*[delta(i,1), delta(i,2), delta(i,3),1]';
     b1(3*(i-1)+1) =TT(1);
-    b1(3*(i-1)+2) = TT(2);
+    b1(3*(i-1)+2) =TT(2);
     b1(3*(i-1)+3) = TT(3);
     
+    TiDi =[];
+    Ti=[];
+    Li=[];
     
 end
-
-   V2 = ((A1)'*(A1))\(A1)'*b1;
+%    for i=1:3
+%     T(3*(i-1)+3*length(V)+1, 3*(v(i)-1)+1) = w;
+%     T(3*(i-1)+2+3*length(V), 3*(v(i)-1)+2) = w;
+%     T(3*(i-1)+3+3*length(V), 3*(v(i)-1)+3) = w; 
+%    end
+   V2 = (A1'*A1)\A1'*b1;
    
   V2n=zeros(length(V),3);
 for i =1:length(V2)

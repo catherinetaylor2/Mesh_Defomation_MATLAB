@@ -2,14 +2,14 @@
 clear
 close all
 
-obj = readObj('dino.obj'); %load mesh info.
+obj = readObj('man.obj'); %load mesh info.
 FV = obj.f.v;
 V = obj.v;
  
 %----code for dino.obj-----------------------------------------------------
-    a = V(:,1);
-    V(:,1) = -V(:,3);
-    V(:,2) = -a;
+%     a = V(:,1);
+%     V(:,1) = -V(:,3);
+%     V(:,2) = -a;
 %--------------------------------------------------------------------------   
 
 figure
@@ -153,7 +153,3 @@ trimesh(FV(:,1:3), V2(:,1), V2(:,2));
 hold on
 plot(x,y,'o');
 % axis([-1.5 1.5 -1 2])
-
-%Not containing 0,1:
-%G1 = [V(v1i,1), V(v1i,2); V(v1i,2), -V(v1i,1); V(v1j,1), V(v1j,2); V(v1j,2), -V(v1j,1); V(v1l,1), V(v1l,2); V(v1l,2), -V(v1l,1); V(v1r,1), V(v1r,2); V(v1r,2), -V(v1r,1)];
-%G1 = [V(v1i,1), V(v1i,2); V(v1i,2), -V(v1i,1); V(v1j,1), V(v1j,2); V(v1j,2), -V(v1j,1); V(v1l,1), V(v1l,2); V(v1l,2), -V(v1l,1) ];
