@@ -1,17 +1,24 @@
+% ----------Computer Animation and Games 2: Coursework 1-------------------
+% ----------------- Catherine Taylor : s169394549 -------------------------
+
+%This function carries out both 2D and 3D mesh deformation. User
+%selects a handle, followed by two fixed vertices and then the goal. Object
+%file can be chosen by specifying the name in the function input.
+
 function V = mesh_deformation( filename )
    
     obj = readObj(filename); %load mesh info.
     FV = obj.f.v;
     V = obj.v;
     
-    if (V(1:5,2) == 0)
+    if (V(1:5,2) == 0) %For dino.obj.
         a = V(:,1);
         V(:,1) = -V(:,3);
         V(:,2) = -a;  
         V(:,3) = zeros(length(V),1);
     end 
            
-    if (V(1:5,3) == 0)          
+    if (V(1:5,3) == 0) %Carry out 2D mesh deformation.        
         
         figure
         subplot(1,2,1)
@@ -35,16 +42,17 @@ function V = mesh_deformation( filename )
         end
         hold on
         plot(x,y,'o');
+        title('Original Image')
 
-        %--------------------------------------------------------------------------
+%--------------------------------------------------------------------------
         %Algorithm 1:
 
-        b1 = zeros(6*length(FV) + 6,1);
+        b1 = zeros(6*length(FV) + 6,1); %Fill b1.
         b1(6*length(FV)+1:6*length(FV)+6) = w*[x(4),y(4), x(2),y(2),x(3),y(3)];
         A1 = zeros(6*length(FV)+6, 2*length(V));
         A2 = zeros(3*length(FV)+3, length(V));
         Edges = [-1,0,1,0,0,0,0,0;0,-1,0,1,0,0,0,0];
-        for i=1:length(FV)
+        for i=1:length(FV) %Create matrix A1 and fill up top of A2.
             A2(3*(i-1)+1, FV(i,1)) = -1; 
             A2(3*(i-1)+1, FV(i,2)) = 1; 
             A2(3*(i-1)+2, FV(i,2)) = -1; 
@@ -100,11 +108,11 @@ function V = mesh_deformation( filename )
             end
         end
         
-        subplot(1,2,2)
+        subplot(1,2,2) %display first step of algorithm.
         trimesh(FV(:,1:3), V1(:,1), V1(:,2));
         hold on
         plot(x,y,'o');
-        
+        title('Step 1')
 %--------------------------------------------------------------------------
 %Algorithm 2:
         
@@ -144,23 +152,25 @@ function V = mesh_deformation( filename )
             b2y(3*length(FV)+i) = w*y(i);
         end
         
-        V2(:,1) = (A2'*A2)\A2'*b2x;
+        V2(:,1) = (A2'*A2)\A2'*b2x; %solve using least squares minimization.
         V2(:,2) = (A2'*A2)\A2'*b2y;
         
         figure
         trimesh(FV(:,1:3), V2(:,1), V2(:,2));
         hold on
         plot(x,y,'o');
+        title('Step 2')
         
-    else %3D case
+    else %Carry out 3D mesh deformation.
         
         figure;
         trimesh(FV(:,1:3), V(:,1), V(:,2), V(:,3)); 
+        title('Original Image')
         w=1;
-        [x,y,z] = ginput(4);
+        [x,y,z] = ginput(4); %select points.
         v = zeros(3,1);
 
-        for i =1:3
+        for i =1:3 %find closest vertices.
             min_dist= 10000; 
             t=0;
             for j =1:length(V) 
@@ -180,6 +190,7 @@ function V = mesh_deformation( filename )
         plot3(x(2:3),y(2:3),z(2:3),'o');
         plot3(x(1),y(1),z(1),'ro');
         plot3(x(4),y(4),z(4),'go');
+
 
         d = zeros(length(V),1);
         D=zeros(length(V));
@@ -213,12 +224,12 @@ function V = mesh_deformation( filename )
             end
         end 
 
-        L = eye(length(V)) - D\A;
+        L = eye(length(V)) - D\A; %Calculate laplacian of vertices.
         delta = L*V(:, 1:3);
 
         A1 = zeros(3*length(V)+9, 3*length(V));
         b1 = zeros(3*length(V)+9,1);
-        for i=1:length(V)
+        for i=1:length(V) %Calculate A1 and b1.
             A1(3*(i-1)+1, 3*(i-1)+1) = 1;
             A1(3*(i-1)+2, 3*(i-1)+2) = 1;
             A1(3*(i-1)+3, 3*(i-1)+3) = 1;
@@ -245,7 +256,7 @@ function V = mesh_deformation( filename )
             b1(3*length(V)+3*(i-1)+2) = w*y(i);
             b1(3*length(V)+3*(i-1)+3) = w*z(i);
         end
-        V1 = (A1'*A1)\A1'*b1;
+        V1 = (A1'*A1)\A1'*b1; %least squares minimization for first step.
         Vn=zeros(length(V),3);
         for i =1:length(V1)
             if (mod(i,3)==1)
@@ -257,8 +268,9 @@ function V = mesh_deformation( filename )
             end    
         end
 
-    figure;
+    figure; %plot updated vertices.
     trimesh(FV(:,1:3), Vn(:,1), Vn(:,2), Vn(:,3)); 
+    title('step 1')
     hold on
     plot3(x(2:3),y(2:3),z(2:3),'o');
     plot3(x(1),y(1),z(1),'ro');
@@ -266,7 +278,7 @@ function V = mesh_deformation( filename )
 
     T = zeros(3*length(V)+9, 3*length(V));
     for i =1:length(V)
-        Ai = zeros(3*length(Vertex_neighbours{i}+3), 7);
+        Ai = zeros(3*length(Vertex_neighbours{i}+3), 7); %create Ai using edge neighbours.
         Ai(1, :) = [V(i,1), 0, V(i,3), -V(i,2),1,0,0];
         Ai(2, :) = [V(i,2), -V(i,3), 0 ,V(i,1),0,1,0];
         Ai(3, :) = [V(i,3), V(i,2), -V(i,1),0,0,0,1];
@@ -276,7 +288,7 @@ function V = mesh_deformation( filename )
             Ai(3*(j-1)+6, :) = [V(Vertex_neighbours{i}(j),3), V(Vertex_neighbours{i}(j),2), -V(Vertex_neighbours{i}(j),1),0,0,0,1];
         end
 
-        Ti = (Ai'*Ai)\Ai';
+        Ti = (Ai'*Ai)\Ai'; %Find transformation matrices Ti.
         Di  = [delta(i,1), 0, delta(i,3), -delta(i,2), 1,0,0; delta(i,2), -delta(i,3), 0 , delta(i,1), 0,1,0; delta(i,3), delta(i,2), - delta(i,1),0,0,0,1];
 
         TiDi = Di*Ti;
@@ -315,18 +327,13 @@ function V = mesh_deformation( filename )
         b1(3*(i-1)+1) =0;
         b1(3*(i-1)+2) =0;
         b1(3*(i-1)+3) = 0;
-
-        TiDi =[];
-        Ti=[];
-        Li=[];
-        Ai=[];
     end
     for i=1:3
         T(3*(i-1)+3*length(V)+1, 3*(v(i)-1)+1) = w;
         T(3*(i-1)+2+3*length(V), 3*(v(i)-1)+2) = w;
         T(3*(i-1)+3+3*length(V), 3*(v(i)-1)+3) = w; 
     end
-    V2 = (T'*T)\T'*b1;
+    V2 = (T'*T)\T'*b1; %solve second step.
    
     V2n=zeros(length(V),3);
     for i =1:length(V2)
@@ -341,6 +348,7 @@ function V = mesh_deformation( filename )
 
     figure;
     trimesh(FV(:,1:3), V2n(:,1), V2n(:,2), V2n(:,3));
+    title('step 2')
     hold on
     plot3(x(2:3),y(2:3),z(2:3),'o');
     plot3(x(1),y(1),z(1),'ro');
